@@ -1,0 +1,23 @@
+[
+    {
+        "id": 1,
+        "title": "AI Engineer",
+        "company": "TechCorp AB",
+        "location": "Stockholm",
+        "description": "Vi söker en AI Engineer till vårt team i Stockholm. Du kommer att arbeta med Python, TensorFlow och PyTorch. Erfarenhet av Machine Learning och NLP är meriterande. Vi använder Docker, Git och AWS i vår dagliga utveckling. SQL-kunskaper är ett krav."
+    },
+    {
+        "id": 2,
+        "title": "Machine Learning Engineer",
+        "company": "DataWorks AB",
+        "location": "Göteborg",
+        "description": "Som ML Engineer hos oss arbetar du med Python, scikit-learn och PyTorch. Du bygger modeller för NLP och rekommendationssystem. Erfarenhet av Docker, Kubernetes och AWS är ett plus. Vi jobbar agilt med Git."
+    },
+    {
+        "id": 3,
+        "title": "Data Scientist",
+        "company": "Analytica AB",
+        "location": "Malmö",
+        "description": "Vi söker en Data Scientist med starka kunskaper i Python och SQL. Du kommer arbeta med Machine Learning, statistik och datavisualisering. Erfarenhet av TensorFlow och Jupyter Notebook är meriterande."
+    }
+]

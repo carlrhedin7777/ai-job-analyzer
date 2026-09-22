@@ -1,47 +1,62 @@
 # main.py
 
-# En hårdkodad jobbannons (så länge)
-job_ad = """
-Vi söker en AI Engineer till vårt team i Stockholm.
-Du kommer att arbeta med Python, TensorFlow och PyTorch.
-Erfarenhet av Machine Learning och NLP är meriterande.
-Vi använder Docker, Git och AWS i vår dagliga utveckling.
-SQL-kunskaper är ett krav.
-"""
+# Hämtar json-modulen för att kunna läsa JSON-filer.
+import json
+
+# En ny funktion, filepath är sökvägen till filen som ska läsas.
+# Funktionen läser jobbannonser från en JSON-fil. Returnerar en lista.
+# Felhantering: Om filen inte hittas eller om JSON är ogiltig, returnerar den en tom lista.
 
 
-# Kompetenskrav, Kompeteskrav vi letar efter - En lista med strängar
+# Funktionen tar en parameter, filepath, som är sökvägen till filen som ska läsas.
+def load_job_ads(filepath):
+    try:
+        # Öppnar filen i läsläge med UTF-8-kodning och ger den namnet f.
+        with open(filepath, "r", encoding="utf-8") as f:
+            # Läser in JSON-data från filen och lagrar den i variabeln data.
+            data = json.load(f)
+        # Returnerar den inlästa datan (en lista med jobbannonser).
+        return data
+    except FileNotFoundError:
+        # Om filen inte hittas,returneras en tom lista och ett felmeddelande.
+        print(f"Filen hittades inte: {filepath}")
+        return []
+    # Om JSON är ogiltig, returneras en tom lista och ett felmeddelande.
+    except json.JSONDecodeError:
+        print(f"Filen är inte gilitig JSON: {filepath}")
+        return []
+
+
+# Definierar en lista med skills som ska sökas efter i jobbannonserna.
 skills_to_find = [
-    "Python",
-    "SQL",
-    "Git",
-    "Docker",
-    "AWS",
-    "TensorFlow",
-    "PyTorch",
-    "Machine Learning",
-    "NLP",
+    "Python", "SQL", "Git", "Docker", "AWS",
+    "TensorFlow", "PyTorch", "Machine Learning", "NLP",
 ]
-print(skills_to_find)
-
-# Funktion som returnerar en lista med de kompetenser som finns i texten.
 
 
+# Funktionen returnerar en lista med de färdigheter som finns i texten.
 def find_skills(text, skills):
-    # en tom lista där vi samlar det vi hittar.
     found = []
-    # loopar igenom varje kompetens.
     for skill in skills:
-        # kollar om kompetensen finns i texten. lower() för att ignorera skiftläge. (python och Python)
         if skill.lower() in text.lower():
-            # lägger till kompetensen i listan
             found.append(skill)
-    # skickar tillbaka listan.
     return found
 
 
-# Använd funktionen för att hitta kompetenser i jobbannonsen
-found_skills = find_skills(job_ad, skills_to_find)
-print("Kompetenser som hittades:")
-for skill in found_skills:
-    print(f"- {skill}")
+# Huvudflöde
+# Läser in jobbannonser från filen "data/jobads.json" och lagrar dem i variabeln job_ads.
+job_ads = load_job_ads("data/jobads.json")
+
+# Skriver ut antalet annonser som har lästs in från filen.
+print(f"Antal annonser: {len(job_ads)}")
+print()
+
+# Loopar igenom varje annons i listan
+for ad in job_ads:
+    # Hämtar fält från dict: ad['title'] osv. En f-sträng sätter in dem i texten. 
+    print(f"--- {ad['title']} hos {ad['company']} ({ad['location']}) ---")
+    # Använder vår gamla funktion på den nya datan.
+    found = find_skills(ad["description"], skills_to_find)
+    for skill in found:    
+        print(f"  - {skill}")
+    print()
