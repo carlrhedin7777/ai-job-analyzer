@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Virtuella miljöer
+venv/
+.venv/
+env/
+
+# VS Code
+.vscode/
+
+# Output (vi vill inte pusha resultat)
+output/*.json
+
+# OS
+.DS_Store
+Thumbs.db
