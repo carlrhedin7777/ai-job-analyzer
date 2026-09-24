@@ -1,12 +1,32 @@
 # main.py
 
+# Importerar våra klasser.
 # Hämtar json-modulen för att kunna läsa JSON-filer.
-import json
+# sys används för att prata med Python-systemet.
+# os används för att prata med operativsystemet.
+from models import JobAd, AIJob, JobAnalyzer
 
-# En ny funktion, filepath är sökvägen till filen som ska läsas.
+import json
+import sys
+import os
+
+
+# Gör det möjligt att importera models.py även när vi kör main.py
+# från projektets rotmapp.
+#
+# os.path.dirname(__file__) ger sökvägen till mappen där main.py ligger
+# (dvs. src).
+#
+# sys.path.append(...) lägger till den mappen i Pythons lista över
+# platser där Python letar efter moduler när vi använder import.
+#
+# Varför? Utan detta kan Python i vissa körsätt inte hitta models.py
+# eftersom den ligger i src.
+sys.path.append(os.path.dirname(__file__))
+
+
 # Funktionen läser jobbannonser från en JSON-fil. Returnerar en lista.
 # Felhantering: Om filen inte hittas eller om JSON är ogiltig, returnerar den en tom lista.
-
 
 # Funktionen tar en parameter, filepath, som är sökvägen till filen som ska läsas.
 def load_job_ads(filepath):
@@ -27,36 +47,51 @@ def load_job_ads(filepath):
         return []
 
 
+# Omvandlar dicts från JSON till JobAd-objekt.
+def build_job_objects(raw_ads):
+    jobs = []
+    for ad in raw_ads:
+        # Skapar ett JobAd-objekt i vår class med namngivna argument – tydligare än positionsargument.
+        # Namngivna argument eftersom det blir tydligare och lättare att läsa, särskilt när JobAd har flera parametrar.
+        # Det minskar också risken att råka lägga ett värde på fel plats.
+        job = JobAd(
+            ad_id=ad["id"],
+            title=ad["title"],
+            company=ad["company"],
+            location=ad["location"],
+            description=ad["description"],
+        )
+        jobs.append(job)
+    return jobs
+
+
 # Definierar en lista med skills som ska sökas efter i jobbannonserna.
 skills_to_find = [
     "Python", "SQL", "Git", "Docker", "AWS",
     "TensorFlow", "PyTorch", "Machine Learning", "NLP",
 ]
 
-
-# Funktionen returnerar en lista med de färdigheter som finns i texten.
-def find_skills(text, skills):
-    found = []
-    for skill in skills:
-        if skill.lower() in text.lower():
-            found.append(skill)
-    return found
+# Skapar en analyzer med vår lista av kompetenser.
+analyzer = JobAnalyzer(skills_to_find)
 
 
 # Huvudflöde
 # Läser in jobbannonser från filen "data/jobads.json" och lagrar dem i variabeln job_ads.
-job_ads = load_job_ads("data/jobads.json")
+raw_ads = load_job_ads("data/jobads.json")
+job_objects = build_job_objects(raw_ads)
+
 
 # Skriver ut antalet annonser som har lästs in från filen.
-print(f"Antal annonser: {len(job_ads)}")
+print(f"Antal annonser: {len(job_objects)}")
 print()
 
+
 # Loopar igenom varje annons i listan
-for ad in job_ads:
-    # Hämtar fält från dict: ad['title'] osv. En f-sträng sätter in dem i texten. 
-    print(f"--- {ad['title']} hos {ad['company']} ({ad['location']}) ---")
-    # Använder vår gamla funktion på den nya datan.
-    found = find_skills(ad["description"], skills_to_find)
-    for skill in found:    
+# Går igenom varje jobb i listan job_objects och kalla dem för job.
+for job in job_objects:
+    print(f"--- {job} ---")
+    # Anropar analyzerns metod – den använder job.has_skill() internt.
+    found = analyzer.analyze(job)
+    for skill in found:
         print(f"  - {skill}")
     print()
