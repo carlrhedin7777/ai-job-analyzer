@@ -10,6 +10,14 @@ class JobAd:  # Basklassen
         self.company = company  # self.x = x sparar varje fält på objektet
         self.location = location
         self.description = description
+        # en lista som kan innehålla extra nyckelord som inte finns i description
+        self.extra_keywords = []
+
+    def full_text(self):
+        # Returnerar all text om annonsen som en sträng.
+        parts = [self.title, self.company, self.location, self.description]
+        parts.extend(self.extra_keywords)
+        return " ".join(parts)
 
     # bestämmer hur  objektet ska visas när man printar det.
     def __str__(self):

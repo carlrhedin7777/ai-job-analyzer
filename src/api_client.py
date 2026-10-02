@@ -1,85 +1,98 @@
 # api_client.py
 
-import json  # importerar json-biblioteket för att hantera JSON-data
-import re  # importerar re-biblioteket för att hantera reguljära uttryck
-import requests  # importerar requests-biblioteket för att göra HTTP-anrop
+import json
+import re
+import requests
+import ftfy
+
+API_URL = "https://remoteok.com/api"
 
 
-# URL till RemoteOK API som vi ska hämta jobbannonser från
-api_url = "https://remoteok.com/api"
+# ---------- Hjälpfunktioner ----------
+
+def clean_html(text):
+    """Tar bort HTML-taggar och onödiga whitespace."""
+    if not isinstance(text, str):
+        return ""
+    text = ftfy.fix_text(text)               # fixar texten med ftfy
+    text = re.sub(r"<[^>]+>", " ", text)     # ta bort taggar
+    text = text.replace("&amp;", "&")
+    text = text.replace("&nbsp;", " ")
+    text = text.replace("&quot;", '"')
+    text = text.replace("&#39;", "'")
+    text = re.sub(r"\s+", " ", text)         # kollapsa whitespace
+    return text.strip()
 
 
-# Hämtar jobbannonser från API. Ta emot en parameter limit som anger hur många annonser som ska hämtas (standard är 5).
+def is_ai_job(job, keywords):
+    """Returnerar True om jobbet matchar något av nyckelorden (hela ord)."""
+    title = job.get("position", "").lower()
+    tags = " ".join(job.get("tags", [])).lower()
+    text = title + " " + tags
+
+    for word in keywords:
+        pattern = r"\b" + re.escape(word.lower()) + r"\b"
+        if re.search(pattern, text):
+            return True
+    return False
+
+
+# ---------- API-hämtning ----------
 
 def fetch_jobs(limit=5):
-
+    """Hämtar jobb från RemoteOK API. Returnerar en lista av dicts."""
     headers = {
-        # Anger en User-Agent för att undvika blockering
-        "User-Agent": "ai-job-analyzer/1.0"
+        "User-Agent": "ai-job-analyzer/1.0 (student project)"
     }
 
-   # Hämtar jobbannonser från RemoteOK API.
-   # Returnerar en lista med jobbannonser (dicts).
-
     try:
-        # Timeout på 10 sekunder om servern inte svarar
-        response = requests.get(api_url, headers=headers, timeout=10)
+        response = requests.get(API_URL, headers=headers, timeout=10)
         response.raise_for_status()
 
-       # Tolka rådata som utf-8 och ladda den som JSON
-        text = response.content.decode("utf-8")
-        data = json.loads(text)
+        # Tolka råbytes som UTF-8
+        text = response.content.decode("utf-8", errors="replace")
 
-        # Hoppar över den första posten som är metadata och tar de första limit annonserna
+        data = json.loads(text)
         jobs = data[1:limit + 1]
+
+        # Rensa HTML från description
+        for job in jobs:
+            if "description" in job:
+                job["description"] = clean_html(job["description"])
+
         return jobs
 
-    except requests.exceptions.timeout:
+    except requests.exceptions.Timeout:
         print("API-anropet tog för lång tid (timeout).")
-        return []
-
-    except requests.exceptions.RequestException as e:
-        print(f"Nätverksfel: {e}")
         return []
 
     except requests.exceptions.HTTPError as e:
         print(f"HTTP-fel: {e}")
         return []
 
-
-def is_ai_job(job, keywords):
-
-    # returnerar True om någon av nyckelorden finns i jobbannonsens titel eller taggar, annars False
-    # Hämtar jobbannonsens titel och konverterar den till små bokstäver
-    title = job.get("position", "").lower()
-    # Hämtar jobbannonsens taggar och konverterar dem till små bokstäver
-    tags = " ".join(job.get("tags", [])).lower()
-    text = title + " " + tags  # Skapar en sträng som innehåller både titel och taggar
-
-    for word in keywords:  # Loopar igenom varje nyckelord i listan keywords
-        # Skapar ett regex-mönster för att matcha hela ord
-        pattern = r"\b" + re.escape(word.lower()) + r"\b"
-        if re.search(pattern, text):  # Om nyckelordet finns i texten (titel + taggar), returnera True
-            return True
-    return False  # Om inget nyckelord matchar, returnera False
+    except requests.exceptions.RequestException as e:
+        print(f"Nätverksfel: {e}")
+        return []
 
 
 def fetch_ai_jobs(limit=5, keywords=None):
-    # Hämtar jobbannonser och filtrerar ut de som är AI-relaterade baserat på nyckelord.
+    """Hämtar AI-relaterade jobb från RemoteOK."""
     if keywords is None:
         keywords = [
             "AI", "artificial intelligence", "machine learning",
-            "deep learning", "neural network", "NLP", "natural language processing",
-            "computer vision", "reinforcement learning"
+            "deep learning", "neural network", "NLP",
+            "natural language processing", "computer vision",
+            "reinforcement learning", "data scientist", "data engineer",
+            "ML engineer", "MLOps"
         ]
 
-    all_jobs = fetch_jobs(limit=50)  # Hämtar jobbannonser
+    all_jobs = fetch_jobs(limit=50)
     ai_jobs = []
 
-    for job in all_jobs:  # Loopar igenom alla jobbannonser
-        if is_ai_job(job, keywords):  # Om jobbet är AI-relaterat
-            ai_jobs.append(job)  # Lägg till det i listan ai_jobs
-            if len(ai_jobs) >= limit:  # Om vi har nått gränsen för hur många annonser vi vill ha
-                break  # Avsluta loopen
+    for job in all_jobs:
+        if is_ai_job(job, keywords):
+            ai_jobs.append(job)
+            if len(ai_jobs) >= limit:
+                break
 
-    return ai_jobs  # Returnerar listan med AI-relaterade jobbannonser
+    return ai_jobs
