@@ -1,5 +1,7 @@
 # api_client.py
 
+import json  # importerar json-biblioteket för att hantera JSON-data
+import re  # importerar re-biblioteket för att hantera reguljära uttryck
 import requests  # importerar requests-biblioteket för att göra HTTP-anrop
 
 
@@ -8,6 +10,7 @@ api_url = "https://remoteok.com/api"
 
 
 # Hämtar jobbannonser från API. Ta emot en parameter limit som anger hur många annonser som ska hämtas (standard är 5).
+
 def fetch_jobs(limit=5):
 
     headers = {
@@ -21,9 +24,11 @@ def fetch_jobs(limit=5):
     try:
         # Timeout på 10 sekunder om servern inte svarar
         response = requests.get(api_url, headers=headers, timeout=10)
-        response.encoding = 'utf-8'  # Säkerställer att vi tolkar svaret som UTF-8
-        response.raise_for_status()  # Kastar ett undantag om statuskoden inte är 200
-        data = response.json()
+        response.raise_for_status()
+
+       # Tolka rådata som utf-8 och ladda den som JSON
+        text = response.content.decode("utf-8")
+        data = json.loads(text)
 
         # Hoppar över den första posten som är metadata och tar de första limit annonserna
         jobs = data[1:limit + 1]
@@ -52,7 +57,9 @@ def is_ai_job(job, keywords):
     text = title + " " + tags  # Skapar en sträng som innehåller både titel och taggar
 
     for word in keywords:  # Loopar igenom varje nyckelord i listan keywords
-        if word.lower() in text:  # Om nyckelordet finns i texten (titel + taggar), returnera True
+        # Skapar ett regex-mönster för att matcha hela ord
+        pattern = r"\b" + re.escape(word.lower()) + r"\b"
+        if re.search(pattern, text):  # Om nyckelordet finns i texten (titel + taggar), returnera True
             return True
     return False  # Om inget nyckelord matchar, returnera False
 
@@ -60,7 +67,11 @@ def is_ai_job(job, keywords):
 def fetch_ai_jobs(limit=5, keywords=None):
     # Hämtar jobbannonser och filtrerar ut de som är AI-relaterade baserat på nyckelord.
     if keywords is None:
-        keywords = ["ai", "ml", "machine learning", "data", "python", "nlp"]
+        keywords = [
+            "AI", "artificial intelligence", "machine learning",
+            "deep learning", "neural network", "NLP", "natural language processing",
+            "computer vision", "reinforcement learning"
+        ]
 
     all_jobs = fetch_jobs(limit=50)  # Hämtar jobbannonser
     ai_jobs = []
