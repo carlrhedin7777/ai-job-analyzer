@@ -1,10 +1,9 @@
 
-from api_client import fetch_jobs
+# test_api.py
 
-jobs = fetch_jobs(limit=3)
-print(f"Hämtade {len(jobs)} jobb från API.")
+from api_client import fetch_ai_jobs
+
+jobs = fetch_ai_jobs(limit=5)
+print(f"Hämtade {len(jobs)} AI-relaterade jobb från API.")
 for job in jobs:
     print(f"- {job.get('position', '?')} hos {job.get('company', '?')}")
-
-
-# test_api.py

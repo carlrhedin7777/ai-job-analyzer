@@ -40,3 +40,35 @@ def fetch_jobs(limit=5):
     except requests.exceptions.HTTPError as e:
         print(f"HTTP-fel: {e}")
         return []
+
+
+def is_ai_job(job, keywords):
+
+    # returnerar True om någon av nyckelorden finns i jobbannonsens titel eller taggar, annars False
+    # Hämtar jobbannonsens titel och konverterar den till små bokstäver
+    title = job.get("position", "").lower()
+    # Hämtar jobbannonsens taggar och konverterar dem till små bokstäver
+    tags = " ".join(job.get("tags", [])).lower()
+    text = title + " " + tags  # Skapar en sträng som innehåller både titel och taggar
+
+    for word in keywords:  # Loopar igenom varje nyckelord i listan keywords
+        if word.lower() in text:  # Om nyckelordet finns i texten (titel + taggar), returnera True
+            return True
+    return False  # Om inget nyckelord matchar, returnera False
+
+
+def fetch_ai_jobs(limit=5, keywords=None):
+    # Hämtar jobbannonser och filtrerar ut de som är AI-relaterade baserat på nyckelord.
+    if keywords is None:
+        keywords = ["ai", "ml", "machine learning", "data", "python", "nlp"]
+
+    all_jobs = fetch_jobs(limit=50)  # Hämtar jobbannonser
+    ai_jobs = []
+
+    for job in all_jobs:  # Loopar igenom alla jobbannonser
+        if is_ai_job(job, keywords):  # Om jobbet är AI-relaterat
+            ai_jobs.append(job)  # Lägg till det i listan ai_jobs
+            if len(ai_jobs) >= limit:  # Om vi har nått gränsen för hur många annonser vi vill ha
+                break  # Avsluta loopen
+
+    return ai_jobs  # Returnerar listan med AI-relaterade jobbannonser
