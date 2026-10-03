@@ -109,13 +109,53 @@ För nybörjare: TensorFlow Developer Certificate eller IBM AI Engineering är b
 
 ## Reflektion
 
-**Gick bra:** Tydlig klassstruktur med arv, robust felhantering, enkel meny.
+### Tekniska val
 
-**Var svårt:** Dubbelkodad UTF-8 från API:et (löstes med `ftfy`), HTML i beskrivningar, många API-jobb utan tekniska kompetenser.
+**Python** – standardspråk inom AI, lätt att läsa och har rätt bibliotek.
 
-**Lärt mig:** Hantera extern data robust, rensa och normalisera text, skilja på "ingen matchning" och "ingen data".
+**JSON** – hanterar strukturerad data bättre än CSV och är samma format som API:er returnerar.
 
-**Skulle göra annorlunda:** Fler kompetenser i listan (LLM, MLOps), fler API:er som komplement.
+**Klasser och arv** – `AIJob` ärver från `JobAd` och återanvänder `has_skill()`. Det ger struktur utan duplicerad kod.
+
+**`requests` och `ftfy`**  `requests` är standard för HTTP. `ftfy` löste dubbelkodad UTF-8 från API:et (`Youâ\x80\x99ll` → `You'll`) på ett sätt som manuell `encode`/`decode` inte klarade.
+
+**`0%` vs `–`** `0%` betyder "annonsen kräver kompetenser, du matchar ingen". `–` betyder "annonsen innehåller inga av våra sökta kompetenser". Skillnaden gör resultatet rättvisande.
+
+### Resultat och insikter
+
+API-jobben fick 0 kompetenser eftersom RemoteOK är en bred tech-sajt. Vårt filter fångar allt med "AI" i titeln – inklusive produktchefer, säljare och annoterare. Dessa kräver inte Python eller TensorFlow.
+
+**Insikt:** Jobbannonser från API:er är ofta marknadsföringstexter, inte kravspecifikationer. För en AI-utvecklare innebär det att man måste läsa hela annonsen, inte bara titeln.
+
+Vi tog bort "AI" från kompetenslistan eftersom alla AI-jobb har det i titeln – det gjorde matchningen missvisande.
+
+### Vad som gick bra
+
+- Tydlig klassstruktur med arv
+- Robust felhantering – programmet kraschar aldrig vid fil- eller nätverksfel
+- Systematisk testning av både normala och felaktiga inputs
+- Enkel, läsbar kod efter förenkling (från ~410 till ~160 rader)
+
+### Vad som var svårt
+
+- **Teckenkodning** – dubbelkodad UTF-8 tog tid att diagnosticera
+- **HTML i beskrivningar** – krävde regex för att rensa
+- **Att förstå resultaten** – 0 kompetenser var först frustrerande, ledde till insikt om branschen
+
+### Vad jag skulle göra annorlunda
+
+- Fler kompetenser (LLM, Generative AI, MLOps)
+- Fler API:er som komplement
+- Spara resultat till fil
+- Titelklassificering (Engineering / Product / Sales) istället för bara "0 kompetenser"
+
+### Vad jag har lärt mig
+
+- Hantera extern data robust med `requests` och felhantering
+- Rensa och normalisera text – centralt för AI-utvecklare
+- Strukturera kod med klasser och arv
+- Att **resultat inte alltid är det man förväntar sig** – ofta mer lärorikt än om allt "lyckas"
+- Enkel kod man kan förklara slår avancerad kod man inte förstår
 
 
 
