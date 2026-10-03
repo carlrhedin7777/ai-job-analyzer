@@ -1,8 +1,5 @@
 # api_client.py
 
-
-# api_client.py
-
 import ftfy
 import json
 import re
@@ -12,26 +9,15 @@ import requests
 API_URL = "https://remoteok.com/api"
 
 
-def clean_html(text):
+def clean_text(text):
     """Tar bort HTML och fixar teckenkodning."""
     text = ftfy.fix_text(text)
     text = re.sub(r"<[^>]+>", " ", text)
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
+    return re.sub(r"\s+", " ", text).strip()
 
 
-def is_ai_job(job, keywords):
-    """Returnerar True om titeln eller taggarna matchar ett AI-nyckelord."""
-    text = (job.get("position", "") + " " +
-            " ".join(job.get("tags", []))).lower()
-    for word in keywords:
-        if re.search(r"\b" + re.escape(word.lower()) + r"\b", text):
-            return True
-    return False
-
-
-def fetch_jobs(limit=5, ai_only=False):
-    """Hämtar jobb från RemoteOK. Om ai_only=True filtreras AI-jobb ut."""
+def fetch_jobs(limit=5):
+    """Hämtar AI-jobb från RemoteOK. Returnerar en lista av dicts."""
     headers = {"User-Agent": "ai-job-analyzer/1.0"}
 
     try:
@@ -42,17 +28,18 @@ def fetch_jobs(limit=5, ai_only=False):
         print(f"Nätverksfel: {e}")
         return []
 
-    jobs = data[1:]
+    # Filtrera på AI-nyckelord i titeln
+    keywords = ["ai", "machine learning", "ml", "deep learning", "nlp"]
+    ai_jobs = []
+    for job in data[1:]:
+        title = job.get("position", "").lower()
+        if any(re.search(r"\b" + re.escape(k) + r"\b", title) for k in keywords):
+            ai_jobs.append(job)
+        if len(ai_jobs) >= limit:
+            break
 
-    # Rensa HTML på varje beskrivning
-    for job in jobs:
-        if "description" in job:
-            job["description"] = clean_html(job["description"])
+    # Rensa HTML i beskrivningen
+    for job in ai_jobs:
+        job["description"] = clean_text(job.get("description", ""))
 
-    # Filtrera på AI om användaren vill
-    if ai_only:
-        keywords = ["AI", "machine learning", "deep learning",
-                    "neural network", "NLP", "computer vision", "ML engineer"]
-        jobs = [j for j in jobs if is_ai_job(j, keywords)]
-
-    return jobs[:limit]
+    return ai_jobs

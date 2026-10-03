@@ -7,45 +7,28 @@
 class JobAd:
     """En jobbannons."""
 
-    def __init__(self, ad_id, title, company, location, description):
-        self.ad_id = ad_id
+    def __init__(self, title, description):
         self.title = title
-        self.company = company
-        self.location = location
         self.description = description
-
-    def full_text(self):
-        """All text om annonsen som en sträng."""
-        return f"{self.title} {self.company} {self.location} {self.description}"
 
     def has_skill(self, skill):
         """Returnerar True om kompetensen finns i annonsen."""
-        return skill.lower() in self.full_text().lower()
+        text = f"{self.title} {self.description}"
+        return skill.lower() in text.lower()
 
     def __str__(self):
-        return f"{self.title} hos {self.company} ({self.location})"
+        return self.title
 
 
 class AIJob(JobAd):
     """En AI-specifik jobbannons. Ärver från JobAd."""
 
-    def __init__(self, ad_id, title, company, location, description, ai_area):
-        super().__init__(ad_id, title, company, location, description)
+    def __init__(self, title, description, ai_area):
+        super().__init__(title, description)
         self.ai_area = ai_area
 
     def __str__(self):
-        return f"[AI] {super().__str__()} - {self.ai_area}"
-
-
-class Candidate:
-    """En jobbsökande med kompetenser."""
-
-    def __init__(self, name, skills):
-        self.name = name
-        self.skills = set(s.lower() for s in skills)
-
-    def __str__(self):
-        return f"{self.name} ({len(self.skills)} kompetenser)"
+        return f"[AI] {super().__str__()}"
 
 
 class JobAnalyzer:
@@ -58,25 +41,14 @@ class JobAnalyzer:
         """Returnerar en lista av kompetenser som finns i annonsen."""
         return [s for s in self.skills if job.has_skill(s)]
 
-    def match(self, job, candidate):
-        """Returnerar matchning mellan kandidat och annons."""
+    def match(self, job, user_skills):
+        """Returnerar matchningsresultat mellan användarens skills och annonsen."""
         required = set(s.lower() for s in self.analyze(job))
-
         if not required:
-            return {
-                "matching": [],
-                "missing": [],
-                "percent": None,
-                "note": "Inga kompetenser hittades i annonsen",
-            }
+            return {"percent": None, "matching": [], "missing": []}
 
-        matching = required & candidate.skills
-        missing = required - candidate.skills
+        user = set(s.lower() for s in user_skills)
+        matching = required & user
+        missing = required - user
         percent = round(len(matching) / len(required) * 100, 1)
-
-        return {
-            "matching": sorted(matching),
-            "missing": sorted(missing),
-            "percent": percent,
-            "note": "",
-        }
+        return {"percent": percent, "matching": sorted(matching), "missing": sorted(missing)}
