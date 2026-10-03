@@ -14,9 +14,13 @@ class JobAd:
         self.location = location
         self.description = description
 
+    def full_text(self):
+        """All text om annonsen som en sträng."""
+        return f"{self.title} {self.company} {self.location} {self.description}"
+
     def has_skill(self, skill):
         """Returnerar True om kompetensen finns i annonsen."""
-        return skill.lower() in self.description.lower()
+        return skill.lower() in self.full_text().lower()
 
     def __str__(self):
         return f"{self.title} hos {self.company} ({self.location})"
@@ -57,16 +61,22 @@ class JobAnalyzer:
     def match(self, job, candidate):
         """Returnerar matchning mellan kandidat och annons."""
         required = set(s.lower() for s in self.analyze(job))
-        matching = required & candidate.skills
-        missing = required - candidate.skills
 
         if not required:
-            percent = 0.0
-        else:
-            percent = round(len(matching) / len(required) * 100, 1)
+            return {
+                "matching": [],
+                "missing": [],
+                "percent": None,
+                "note": "Inga kompetenser hittades i annonsen",
+            }
+
+        matching = required & candidate.skills
+        missing = required - candidate.skills
+        percent = round(len(matching) / len(required) * 100, 1)
 
         return {
             "matching": sorted(matching),
             "missing": sorted(missing),
             "percent": percent,
+            "note": "",
         }

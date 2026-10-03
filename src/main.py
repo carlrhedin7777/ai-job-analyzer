@@ -1,9 +1,8 @@
 # main.py är huvudfilen som kör programmet. Den innehåller menyval och flödet för att analysera jobbannonser.
 
-# main.py
 
-from api_client import fetch_jobs
 from models import JobAd, AIJob, JobAnalyzer, Candidate
+from api_client import fetch_jobs
 import json
 import os
 import sys
@@ -15,10 +14,10 @@ sys.path.append(os.path.dirname(__file__))
 DATA_FILE = "data/jobads.json"
 OUTPUT_FILE = "output/results.json"
 SKILLS = ["Python", "SQL", "Git", "Docker", "AWS",
-          "TensorFlow", "PyTorch", "Machine Learning", "NLP"]
-
+          "TensorFlow", "PyTorch", "Machine Learning", "ML", "NLP",]
 
 # ---------- Inläsning ----------
+
 
 def load_job_ads(filepath):
     """Läser jobbannonser från JSON. Returnerar en lista av dicts."""
@@ -31,15 +30,13 @@ def load_job_ads(filepath):
 
 
 def build_jobs(raw_ads, from_api=False):
-    """Omvandlar dicts till JobAd-objekt."""
     jobs = []
     for ad in raw_ads:
         ad_id = ad.get("id", 0)
-        title = ad.get("title") or ad.get("position", "Okänd titel")
-        company = ad.get("company", "Okänt företag")
-        location = ad.get("location", "Okänd plats")
-        # Slå ihop description + tags till en text
-        description = ad.get("description", "")
+        title = (ad.get("title") or ad.get("position", "Okänd titel")).strip()
+        company = ad.get("company", "Okänt företag").strip()
+        location = ad.get("location", "Okänd plats").strip()
+        description = ad.get("description", "").strip()
         tags = ad.get("tags", [])
         if tags:
             description += " " + " ".join(tags)
@@ -64,13 +61,15 @@ def print_analysis(jobs, analyzer):
 
 
 def print_matches(jobs, analyzer, candidate):
-    """Skriver ut matchning mellan kandidat och jobb."""
     for job in jobs:
         result = analyzer.match(job, candidate)
+        percent = f"{result['percent']}%" if result["percent"] is not None else "–"
         print(f"--- {job} ---")
-        print(f"  Matchning: {result['percent']}%")
+        print(f"  Matchning: {percent}")
         print(f"  Matchande: {', '.join(result['matching']) or '–'}")
         print(f"  Saknade:   {', '.join(result['missing']) or '–'}")
+        if result["note"]:
+            print(f"  Not:       {result['note']}")
         print()
 
 
