@@ -12,9 +12,6 @@ env/
 # VS Code
 .vscode/
 
-# Output (vi vill inte pusha resultat)
-output/*.json
-
 # OS
 .DS_Store
 Thumbs.db
