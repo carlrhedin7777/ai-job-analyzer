@@ -1,7 +1,7 @@
 # main.py är huvudfilen som kör programmet. Den innehåller menyval och flödet för att analysera jobbannonser.
 
 from api_client import fetch_ai_jobs
-from models import JobAd, JobAnalyzer
+from models import JobAd, AIJob, JobAnalyzer, Candidate
 import json
 import os
 import sys
@@ -95,7 +95,8 @@ def show_menu():
     print("=== AI Job Analyzer ===")
     print("1. Analysera lokala jobbannonser (JSON)")
     print("2. Hämta och analysera AI-jobb från API")
-    print("3. Avsluta")
+    print("3. Matcha dina kompetenser mot annonser")
+    print("4. Avsluta")
     print()
 
 
@@ -133,18 +134,65 @@ def run_api_analysis(analyzer):
     save_results(results, OUTPUT_FILE)
 
 
+def ask_for_skills():
+    """Frågar användaren efter kompetenser. Returnerar en lista."""
+    text = input("Ange dina kompetenser (kommaseparerade): ").strip()
+    if not text:
+        return []
+    return [s.strip() for s in text.split(",") if s.strip()]
+
+
+def run_match_analysis(analyzer):
+    """Matchar användarens kompetenser mot en vald annons."""
+    print("\nVar vill du matcha mot?")
+    print("1. Lokala annonser (JSON)")
+    print("2. API-jobb")
+    source = input("Välj (1-2): ").strip()
+
+    if source == "1":
+        raw_ads = load_job_ads(DATA_FILE)
+    elif source == "2":
+        raw_ads = fetch_ai_jobs(limit=5)
+    else:
+        print("Ogiltigt val.")
+        return
+
+    if not raw_ads:
+        print("Ingen data att matcha mot.")
+        return
+
+    jobs = build_job_objects(raw_ads)
+    skills = ask_for_skills()
+    if not skills:
+        print("Inga kompetenser angivna.")
+        return
+
+    candidate = Candidate("Du", skills)
+    print(f"\nMatchar {candidate} mot {len(jobs)} annonser:\n")
+
+    for job in jobs:
+        result = analyzer.match(job, candidate)
+        print(f"--- {job} ---")
+        print(f"  Matchningsprocent: {result['percent']}%")
+        print(f"  Matchande: {', '.join(result['matching']) or '–'}")
+        print(f"  Saknade:   {', '.join(result['missing']) or '–'}")
+        print()
+
+
 def main():
     analyzer = JobAnalyzer(SKILLS_TO_FIND)
 
     while True:
         show_menu()
-        choice = input("Välj ett alternativ (1-3): ").strip()
+        choice = input("Välj ett alternativ (1-4): ").strip()
 
         if choice == "1":
             run_local_analysis(analyzer)
         elif choice == "2":
             run_api_analysis(analyzer)
         elif choice == "3":
+            run_match_analysis(analyzer)
+        elif choice == "4":
             print("Hej då!")
             break
         else:
